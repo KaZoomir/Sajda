@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import PrayerTimes from './components/PrayerTimes';
 import QiblaFinder from './components/QiblaFinder';
 import ZikrCounter from './components/ZikrCounter';
+import IslamicCalendar from './components/IslamicCalendar';
 
 function App() {
   return (
@@ -29,7 +30,7 @@ function App() {
             <Route path="/" element={<PrayerTimes />} />
             <Route path="/qibla" element={<QiblaFinder />} />
             <Route path="/quran" element={<div className="placeholder-page">Страница Корана</div>} />
-            <Route path="/calendar" element={<div className="placeholder-page">Исламский календарь</div>} />
+           <Route path="/calendar" element = {<IslamicCalendar />}/>
             <Route path="/dhikr" element={<ZikrCounter />} />
             <Route path="/about" element={<div className="placeholder-page">О нас</div>} />
           </Routes>
