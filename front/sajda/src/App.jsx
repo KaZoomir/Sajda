@@ -4,6 +4,7 @@ import PrayerTimes from './components/PrayerTimes';
 import QiblaFinder from './components/QiblaFinder';
 import ZikrCounter from './components/ZikrCounter';
 import IslamicCalendar from './components/IslamicCalendar';
+import QuranReader from './components/QuranReader';
 
 function App() {
   return (
@@ -29,8 +30,8 @@ function App() {
           <Routes>
             <Route path="/" element={<PrayerTimes />} />
             <Route path="/qibla" element={<QiblaFinder />} />
-            <Route path="/quran" element={<div className="placeholder-page">Страница Корана</div>} />
-           <Route path="/calendar" element = {<IslamicCalendar />}/>
+            <Route path="/quran" element={<QuranReader />} />
+            <Route path="/calendar" element={<IslamicCalendar />} />
             <Route path="/dhikr" element={<ZikrCounter />} />
             <Route path="/about" element={<div className="placeholder-page">О нас</div>} />
           </Routes>
