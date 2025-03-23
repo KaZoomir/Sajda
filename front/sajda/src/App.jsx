@@ -5,6 +5,7 @@ import QiblaFinder from './components/QiblaFinder';
 import ZikrCounter from './components/ZikrCounter';
 import IslamicCalendar from './components/IslamicCalendar';
 import QuranReader from './components/QuranReader';
+import AboutUs from './components/AboutUs'
 
 function App() {
   return (
@@ -33,7 +34,7 @@ function App() {
             <Route path="/quran" element={<QuranReader />} />
             <Route path="/calendar" element={<IslamicCalendar />} />
             <Route path="/dhikr" element={<ZikrCounter />} />
-            <Route path="/about" element={<div className="placeholder-page">О нас</div>} />
+            <Route path = "/about" element = {<AboutUs />}/>
           </Routes>
         </div>
         
