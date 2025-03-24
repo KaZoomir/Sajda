@@ -6,6 +6,8 @@ import ZikrCounter from './components/ZikrCounter';
 import IslamicCalendar from './components/IslamicCalendar';
 import QuranReader from './components/QuranReader';
 import AboutUs from './components/AboutUs'
+import Terms from './components/Terms';
+import Privacy from './components/Privacy';
 
 function App() {
   return (
@@ -35,19 +37,21 @@ function App() {
             <Route path="/calendar" element={<IslamicCalendar />} />
             <Route path="/dhikr" element={<ZikrCounter />} />
             <Route path = "/about" element = {<AboutUs />}/>
+            <Route path = "/terms" element = {<Terms />}/>
+            <Route path = "/privacy" element = {<Privacy />}/>
           </Routes>
         </div>
         
         {/* Footer */}
         <footer className="footer">
-          <div className="footer-content">
-            <div className="footer-logo">Sajda App © 2025</div>
-            <div className="footer-links">
-              <a href="#" className="footer-link">Условия использования</a>
-              <a href="#" className="footer-link">Конфиденциальность</a>
-              <a href="#" className="footer-link">Контакты</a>
-            </div>
-          </div>
+        <div className="footer-content">
+        <div className="footer-logo">Sajda App © 2025</div>
+        <div className="footer-links">
+        <a href="/terms" className="footer-link">Условия использования</a>
+        <a href="/privacy" className="footer-link">Конфиденциальность</a>
+        <a href="https://instagram.com/sajda_web_app" target="_blank" rel="noopener noreferrer" className="footer-link">Контакты</a>
+        </div>
+        </div>
         </footer>
       </div>
       
