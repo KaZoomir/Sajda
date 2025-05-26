@@ -1,13 +1,220 @@
 <!doctype html>
-<html lang="en">
+<html lang="ru">
   <head>
     <meta charset="UTF-8" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Standard favicon -->
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React</title>
+    
+    <!-- Mobile viewport -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    
+    <!-- PWA Theme colors -->
+    <meta name="theme-color" content="#16a085" />
+    <meta name="msapplication-TileColor" content="#2c3e50" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    
+    <!-- PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Sajda" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    
+    <!-- Apple touch icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/apple-touch-icon-152x152.png" />
+    <link rel="apple-touch-icon" sizes="144x144" href="/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon" sizes="120x120" href="/apple-touch-icon-120x120.png" />
+    
+    <!-- SEO Meta Tags -->
+    <title>Sajda - Исламское приложение | Время намаза, Кибла, Коран</title>
+    <meta name="description" content="Полное исламское приложение с временем намаза, направлением Киблы, чтением Корана, исламским календарем и счетчиком зикра" />
+    <meta name="keywords" content="намаз, кибла, коран, ислам, зикр, календарь, молитва, мусульмане" />
+    <meta name="author" content="Sajda Web App" />
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="Sajda - Исламское приложение" />
+    <meta property="og:description" content="Время намаза, Кибла, Коран, исламский календарь и зикр в одном приложении" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/og-image.png" />
+    <meta property="og:url" content="https://sajda-app.vercel.app" />
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Sajda - Исламское приложение" />
+    <meta name="twitter:description" content="Время намаза, Кибла, Коран и многое другое" />
+    <meta name="twitter:image" content="/twitter-image.png" />
+    
+    <!-- Preconnect to external domains -->
+    <link rel="preconnect" href="https://api.aladhan.com" />
+    <link rel="preconnect" href="https://api.alquran.cloud" />
+    <link rel="preconnect" href="https://api.bigdatacloud.net" />
+    
+    <!-- Security -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-Frame-Options" content="DENY" />
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
+    
+    <!-- Android specific -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="Sajda" />
+    
+    <!-- Windows specific -->
+    <meta name="msapplication-TileImage" content="/mstile-144x144.png" />
+    <meta name="msapplication-config" content="/browserconfig.xml" />
+    
+    <!-- Prevent automatic phone number detection -->
+    <meta name="format-detection" content="telephone=no" />
+    
+    <!-- Loading CSS for better UX -->
+    <style>
+      /* Loading screen */
+      #loading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #2c3e50;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        color: white;
+      }
+      
+      .loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-top: 4px solid #16a085;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 20px;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      .loading-text {
+        font-size: 18px;
+        font-weight: 300;
+      }
+      
+      /* Hide loading when app loads */
+      .app-loaded #loading {
+        display: none;
+      }
+      
+      /* Prevent FOUC (Flash of Unstyled Content) */
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background-color: #f0f2f5;
+      }
+      
+      /* iOS Safari specific styles */
+      @supports (-webkit-touch-callout: none) {
+        body {
+          padding-top: env(safe-area-inset-top);
+          padding-left: env(safe-area-inset-left);
+          padding-right: env(safe-area-inset-right);
+          padding-bottom: env(safe-area-inset-bottom);
+        }
+      }
+    </style>
   </head>
   <body>
+    <!-- Loading screen -->
+    <div id="loading">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Загрузка Sajda...</div>
+    </div>
+    
+    <!-- App root -->
     <div id="root"></div>
+    
+    <!-- Main app script -->
     <script type="module" src="/src/main.jsx"></script>
+    
+    <!-- Service Worker registration -->
+    <script>
+      // Register service worker for PWA
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('SW registered: ', registration);
+            })
+            .catch((registrationError) => {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
+      }
+      
+      // Hide loading screen when React app loads
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          document.body.classList.add('app-loaded');
+        }, 500);
+      });
+      
+      // Install prompt for PWA
+      let deferredPrompt;
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        
+        // Show install button after 30 seconds
+        setTimeout(() => {
+          if (deferredPrompt) {
+            const installButton = document.createElement('button');
+            installButton.textContent = '📱 Установить приложение';
+            installButton.style.cssText = `
+              position: fixed;
+              bottom: 20px;
+              right: 20px;
+              background: #16a085;
+              color: white;
+              border: none;
+              padding: 12px 20px;
+              border-radius: 25px;
+              font-size: 14px;
+              cursor: pointer;
+              box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+              z-index: 1000;
+            `;
+            
+            installButton.addEventListener('click', () => {
+              deferredPrompt.prompt();
+              deferredPrompt.userChoice.then(() => {
+                deferredPrompt = null;
+                installButton.remove();
+              });
+            });
+            
+            document.body.appendChild(installButton);
+          }
+        }, 30000);
+      });
+      
+      // Enhanced error handling
+      window.addEventListener('error', (e) => {
+        console.error('App error:', e.error);
+        // In production, you might want to send errors to a logging service
+      });
+      
+      // Handle unhandled promise rejections
+      window.addEventListener('unhandledrejection', (e) => {
+        console.error('Unhandled promise rejection:', e.reason);
+        // Prevent the default browser error handling
+        e.preventDefault();
+      });
+    </script>
   </body>
 </html>

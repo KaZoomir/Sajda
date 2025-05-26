@@ -1,25 +1,25 @@
 import { useEffect, useState, useCallback } from "react";
+import LocationFallback from './LocationFallback';
 
 const PrayerTimes = () => {
   const [times, setTimes] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showLocationFallback, setShowLocationFallback] = useState(false);
   const [currentDate, setCurrentDate] = useState("");
   const [islamicDate, setIslamicDate] = useState("");
   const [cityName, setCityName] = useState("");
   const [currentTime, setCurrentTime] = useState("");
   const [currentPrayer, setCurrentPrayer] = useState("");
   const [timeUntilNext, setTimeUntilNext] = useState("");
+  const [userLocation, setUserLocation] = useState(null);
   
   // Function to convert to Hijri date
   const getHijriDate = () => {
-    // This is a simplified version. For a full implementation, 
-    // consider using a library like hijri-date or moment-hijri
     const today = new Date();
-    // This is an approximation - in a real app, you would use a proper library
-    const hijriYear = 1446; // Example fixed year
-    const hijriMonthName = "Рамадан"; // Example fixed month
-    const hijriDay = Math.floor(Math.random() * 20) + 1; // Random day for example
+    const hijriYear = 1446;
+    const hijriMonthName = "Рамадан";
+    const hijriDay = Math.floor(Math.random() * 20) + 1;
     
     return `${hijriDay} ${hijriMonthName}, ${hijriYear}`;
   };
@@ -39,6 +39,106 @@ const PrayerTimes = () => {
       hour12: false
     });
   };
+
+  // Enhanced fetch with retry logic
+  const fetchWithRetry = async (url, maxRetries = 3) => {
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+      } catch (error) {
+        console.warn(`Attempt ${i + 1} failed:`, error);
+        if (i === maxRetries - 1) throw error;
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
+      }
+    }
+  };
+
+  // Load prayer times for given coordinates
+  const loadPrayerTimes = async (latitude, longitude, cityNameOverride = null) => {
+    try {
+      setLoading(true);
+      setError(null);
+      setShowLocationFallback(false);
+      
+      // Set user location
+      setUserLocation({ latitude, longitude });
+      
+      // Set date information
+      const today = new Date();
+      setCurrentDate(getWeekdayRussian());
+      setIslamicDate(getHijriDate());
+      setCurrentTime(formatTime(today));
+      
+      // Get city name if not provided
+      if (!cityNameOverride) {
+        try {
+          const locationData = await fetchWithRetry(
+            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=ru`
+          );
+          setCityName(locationData.city || locationData.locality || "Ваше местоположение");
+        } catch (locationError) {
+          console.warn("Failed to get city name:", locationError);
+          setCityName("Ваше местоположение");
+        }
+      } else {
+        setCityName(cityNameOverride);
+      }
+      
+      // Get prayer times with retry
+      const prayerData = await fetchWithRetry(
+        `https://api.aladhan.com/v1/timings?latitude=${latitude}&longitude=${longitude}&method=2&tune=0,0,0,0,0,0,0,0,0`
+      );
+      
+      if (prayerData && prayerData.data && prayerData.data.timings) {
+        setTimes(prayerData.data.timings);
+      } else {
+        throw new Error("Неверный формат данных от API");
+      }
+      
+      setLoading(false);
+    } catch (err) {
+      console.error("Error loading prayer times:", err);
+      setError(err.message || "Не удалось загрузить время намаза. Попробуйте выбрать город вручную.");
+      setLoading(false);
+    }
+  };
+
+  // Try to get location automatically on component mount
+  useEffect(() => {
+    const tryAutoLocation = () => {
+      if (!navigator.geolocation) {
+        setShowLocationFallback(true);
+        setLoading(false);
+        return;
+      }
+
+      const options = {
+        enableHighAccuracy: true,
+        timeout: 8000, // 8 seconds timeout
+        maximumAge: 300000 // 5 minutes cache
+      };
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          loadPrayerTimes(latitude, longitude);
+        },
+        (geoError) => {
+          console.warn("Geolocation failed:", geoError);
+          setShowLocationFallback(true);
+          setLoading(false);
+          setError("Не удалось определить местоположение автоматически. Выберите город из списка.");
+        },
+        options
+      );
+    };
+
+    tryAutoLocation();
+  }, []);
   
   // Function to calculate current prayer and time until next prayer
   const calculatePrayerTimes = useCallback(() => {
@@ -58,7 +158,7 @@ const PrayerTimes = () => {
     };
     
     const prayers = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
-    let currentPrayerName = "Isha"; // Default to Isha if before Fajr
+    let currentPrayerName = "Isha";
     let nextPrayerName = "Fajr";
     let nextPrayerTime = prayerTimes.Fajr;
     
@@ -75,7 +175,7 @@ const PrayerTimes = () => {
           if (i > 0) {
             currentPrayerName = prayers[i-1];
           } else {
-            currentPrayerName = "Isha"; // If before Fajr, current is Isha (from yesterday)
+            currentPrayerName = "Isha";
           }
           break;
         }
@@ -95,64 +195,15 @@ const PrayerTimes = () => {
     
     // Calculate time until next prayer
     const timeDiff = nextPrayerTime - now;
-    const hours = Math.floor(timeDiff / (1000 * 60 * 60)).toString().padStart(2, '0');
-    const minutes = Math.floor((timeDiff / (1000 * 60)) % 60).toString().padStart(2, '0');
-    const seconds = Math.floor((timeDiff / 1000) % 60).toString().padStart(2, '0');
-    
-    setTimeUntilNext(`${hours}:${minutes}:${seconds}`);
-  }, [times]);
-  
-  useEffect(() => {
-    // Set date information
-    const today = new Date();
-    setCurrentDate(getWeekdayRussian());
-    setIslamicDate(getHijriDate());
-    setCurrentTime(formatTime(today));
-    
-    // Get user location and fetch prayer times
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          try {
-            const { latitude, longitude } = position.coords;
-            
-            // Get city name from coordinates
-            const locationResponse = await fetch(
-              `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=ru`
-            );
-            
-            if (locationResponse.ok) {
-              const locationData = await locationResponse.json();
-              setCityName(locationData.city || "Ваш город");
-            }
-            
-            // Get prayer times
-            const response = await fetch(
-              `https://api.aladhan.com/v1/timings?latitude=${latitude}&longitude=${longitude}&method=2`
-            );
-            
-            if (!response.ok) {
-              throw new Error("Failed to fetch prayer times");
-            }
-            
-            const data = await response.json();
-            setTimes(data.data.timings);
-            setLoading(false);
-          } catch (err) {
-            setError("Не удалось загрузить время намаза. Пожалуйста, попробуйте позже.");
-            setLoading(false);
-          }
-        },
-        (geoError) => {
-          setError("Для отображения времени намаза необходим доступ к местоположению.");
-          setLoading(false);
-        }
-      );
+    if (timeDiff > 0) {
+      const hours = Math.floor(timeDiff / (1000 * 60 * 60)).toString().padStart(2, '0');
+      const minutes = Math.floor((timeDiff / (1000 * 60)) % 60).toString().padStart(2, '0');
+      const seconds = Math.floor((timeDiff / 1000) % 60).toString().padStart(2, '0');
+      setTimeUntilNext(`${hours}:${minutes}:${seconds}`);
     } else {
-      setError("Геолокация не поддерживается в вашем браузере.");
-      setLoading(false);
+      setTimeUntilNext("00:00:00");
     }
-  }, []);
+  }, [times]);
   
   // Update time every second
   useEffect(() => {
@@ -162,6 +213,47 @@ const PrayerTimes = () => {
     
     return () => clearInterval(timer);
   }, [calculatePrayerTimes]);
+
+  // Handle location selection from fallback component
+  const handleLocationSelected = (latitude, longitude, cityName) => {
+    loadPrayerTimes(latitude, longitude, cityName);
+  };
+
+  // Retry automatic geolocation
+  const retryGeolocation = () => {
+    setShowLocationFallback(false);
+    setLoading(true);
+    setError(null);
+    
+    // Try again after short delay
+    setTimeout(() => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            loadPrayerTimes(latitude, longitude);
+          },
+          () => {
+            setShowLocationFallback(true);
+            setLoading(false);
+          }
+        );
+      } else {
+        setShowLocationFallback(true);
+        setLoading(false);
+      }
+    }, 500);
+  };
+
+  // Show location fallback if needed
+  if (showLocationFallback) {
+    return (
+      <LocationFallback 
+        onLocationSelected={handleLocationSelected}
+        onRetryGeolocation={retryGeolocation}
+      />
+    );
+  }
   
   // Prayer name mapping
   const prayerNames = {
@@ -191,18 +283,37 @@ const PrayerTimes = () => {
           <div className="location-section">
             <div className="city-name">{cityName}</div>
             <div className="current-time">{currentTime}</div>
+            {userLocation && (
+              <button 
+                className="change-location"
+                onClick={() => setShowLocationFallback(true)}
+              >
+                📍 Изменить город
+              </button>
+            )}
           </div>
         </div>
         
         {loading && (
           <div className="loading-container">
-            <div className="loading">Загрузка времени намаза...</div>
+            <div className="loading">
+              <div className="spinner"></div>
+              Загрузка времени намаза...
+            </div>
           </div>
         )}
         
         {error && (
           <div className="error-container">
             <div className="error-message">{error}</div>
+            <div className="error-actions">
+              <button onClick={() => setShowLocationFallback(true)} className="select-city-button">
+                🌍 Выбрать город
+              </button>
+              <button onClick={retryGeolocation} className="retry-button">
+                🔄 Попробовать снова
+              </button>
+            </div>
           </div>
         )}
         
@@ -318,7 +429,23 @@ const PrayerTimes = () => {
           opacity: 0.8;
         }
         
-        .loading-container, .error-container {
+        .change-location {
+          background-color: rgba(255, 255, 255, 0.2);
+          color: white;
+          border: none;
+          padding: 5px 10px;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 12px;
+          margin-top: 5px;
+          transition: background-color 0.3s;
+        }
+        
+        .change-location:hover {
+          background-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .loading-container {
           padding: 50px;
           text-align: center;
         }
@@ -326,6 +453,29 @@ const PrayerTimes = () => {
         .loading {
           color: #333;
           font-size: 18px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 15px;
+        }
+        
+        .spinner {
+          width: 40px;
+          height: 40px;
+          border: 4px solid #f3f3f3;
+          border-top: 4px solid #16a085;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        
+        .error-container {
+          padding: 30px;
+          text-align: center;
         }
         
         .error-message {
@@ -334,6 +484,37 @@ const PrayerTimes = () => {
           padding: 15px;
           border-radius: 5px;
           font-size: 16px;
+          margin-bottom: 20px;
+        }
+        
+        .error-actions {
+          display: flex;
+          gap: 15px;
+          justify-content: center;
+          flex-wrap: wrap;
+        }
+        
+        .select-city-button, .retry-button {
+          background-color: #16a085;
+          color: white;
+          border: none;
+          padding: 12px 24px;
+          border-radius: 6px;
+          cursor: pointer;
+          font-size: 16px;
+          transition: background-color 0.3s;
+        }
+        
+        .select-city-button:hover, .retry-button:hover {
+          background-color: #1abc9c;
+        }
+        
+        .select-city-button {
+          background-color: #f39c12;
+        }
+        
+        .select-city-button:hover {
+          background-color: #e67e22;
         }
         
         .prayer-times-wrapper {
@@ -468,6 +649,11 @@ const PrayerTimes = () => {
           
           .date-display {
             justify-content: center;
+          }
+          
+          .error-actions {
+            flex-direction: column;
+            align-items: center;
           }
         }
       `}</style>
