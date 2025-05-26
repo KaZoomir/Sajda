@@ -1,0 +1,67 @@
+{
+    "name": "Sajda - Исламское приложение",
+    "short_name": "Sajda",
+    "description": "Время намаза, Кибла, Коран, Исламский календарь и счетчик зикра",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#2c3e50",
+    "theme_color": "#16a085",
+    "orientation": "portrait-primary",
+    "scope": "/",
+    "lang": "ru",
+    "categories": ["lifestyle", "utilities"],
+    "icons": [
+      {
+        "src": "icon-192.png",
+        "sizes": "192x192",
+        "type": "image/png",
+        "purpose": "any maskable"
+      },
+      {
+        "src": "icon-512.png", 
+        "sizes": "512x512",
+        "type": "image/png",
+        "purpose": "any maskable"
+      }
+    ],
+    "screenshots": [
+      {
+        "src": "screenshot-mobile.png",
+        "sizes": "390x844",
+        "type": "image/png",
+        "form_factor": "narrow"
+      }
+    ],
+    "shortcuts": [
+      {
+        "name": "Время намаза",
+        "short_name": "Намаз",
+        "description": "Посмотреть время намаза",
+        "url": "/",
+        "icons": [{"src": "icon-192.png", "sizes": "192x192"}]
+      },
+      {
+        "name": "Кибла",
+        "short_name": "Кибла", 
+        "description": "Найти направление Киблы",
+        "url": "/qibla",
+        "icons": [{"src": "icon-192.png", "sizes": "192x192"}]
+      },
+      {
+        "name": "Коран",
+        "short_name": "Коран",
+        "description": "Читать Коран",
+        "url": "/quran", 
+        "icons": [{"src": "icon-192.png", "sizes": "192x192"}]
+      },
+      {
+        "name": "Зикр",
+        "short_name": "Зикр",
+        "description": "Счетчик зикра",
+        "url": "/dhikr",
+        "icons": [{"src": "icon-192.png", "sizes": "192x192"}]
+      }
+    ],
+    "related_applications": [],
+    "prefer_related_applications": false
+  }
