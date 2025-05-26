@@ -132,6 +132,8 @@ function App() {
         .footer-link:hover {
           opacity: 1;
         }
+
+        
         
         .placeholder-page {
           background-color: white;
